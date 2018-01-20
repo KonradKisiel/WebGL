@@ -1,0 +1,96 @@
+<!DOCTYPE>
+<html>
+<head>
+    <title>WebGL starting template</title>
+    <meta name="author" content="Konrad Kisiel">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, minimum-scale=1.0, maximum-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        html,body {margin: 0px;}
+    </style>
+</head>
+
+<body onload="main();">
+    <canvas id="WebGL_canvas" width="640" height="480">Your browser does not support HTML5</canvas>
+    <script type="text/javascript">
+        var vertexShaderText =
+            [
+                'precision mediump float;',
+                'void main()',
+                '{',
+                'gl_Position = vec4(0.0, 0.0, 0.0, 1.0);',
+                '}'
+            ].join('\n');
+
+        var fragmentShaderText =
+            [
+                'precision mediump float;',
+                'void main()',
+                '{',
+                'gl_FragColor = vec4(0.0, 0.5, 1.0, 1.0);',
+                '}'
+            ].join('\n');
+
+        function checkWebGL(canvas) {
+            var ctx = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], gl;
+            for (var i = 0; i < ctx.length; i++) {
+                try { gl = canvas.getContext(ctx[i]); }
+                catch (e) { }
+                if (gl) break;
+            }
+            if (!gl) alert('Your browser does not support WebGL');
+            return gl;
+        }
+
+        function main() {
+            var canvas = document.getElementById("WebGL_canvas");
+            gl = checkWebGL(canvas);
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+            var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+            //setting shader source, shader which we want to set and source code for it
+            gl.shaderSource(vertexShader, vertexShaderText);
+            gl.shaderSource(fragmentShader, fragmentShaderText);
+
+            gl.compileShader(vertexShader);
+            //checking for vertexShader compilation errors
+            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                console.error('ERROR compiling vertex shader!', gl.getShaderInfoLog(vertexShader));
+                return;
+            }
+            gl.compileShader(fragmentShader);
+            //checking for vertexShader compilation errors
+            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                console.error('ERROR compiling frament shader!', gl.getShaderInfoLog(fragmentShader));
+                return;
+            }
+            //[telling that we want to use two fragments of pipeline together in program]
+            var program = gl.createProgram();
+            //attaching shaders to program
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            //linking things together
+            gl.linkProgram(program);
+            //checking for link errors
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('ERROR linking program', gl.getProgramInfoLog(program));
+                return;
+            }
+            //catching additional errors
+            gl.validateProgram(program);
+            if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+                console.error('ERROR validating program!', gl.getProgramInfoLog(program));
+                return;
+            }
+
+            //
+            // OBJECTS DATA
+            //
+
+            gl.useProgram(program);
+        }
+    </script>
+</body>
+</html>
