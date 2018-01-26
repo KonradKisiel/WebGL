@@ -117,7 +117,7 @@
             //creating identity matrix
             mat4.identity(worldMatrix);
             //glMatrix Function lookAt(out[x, y, z], eye, center, up)
-            mat4.lookAt(viewMatrix, [0.0, 3.0, -5.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
+            mat4.lookAt(viewMatrix, [0.0, 1.0, -2.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
             //glmatrix perspective (out, fov in radians, seting aspect ratio, nearest, farest possible psn)
             mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, 0.1, 1000.0)
             //mat4.identity(projMatrix);
@@ -128,75 +128,22 @@
             gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
             gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
 
+            //creating psn buffer
+            var positionBuffer = gl.createBuffer();
+            //Global bind points are (punkt odniesienia) attacheing to the ARRAY_BUFFER
+            //binding positionBuffer with ARRAY_BUFFER
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
             //Cube vertives
             //creating list of points (Vertex Data) in CPU
             var vertices =
                 [ // X, Y, Z           R, G, B
-                  // Top
-                    -1.0, 1.0, -1.0,      1.0, 1.0, 1.0,
-                    -1.0, 1.0, 1.0,       1.0, 1.0, 1.0,
-                    1.0, 1.0, 1.0,        1.0, 1.0, 1.0,
-                    1.0, 1.0, -1.0,       1.0, 1.0, 1.0,
-                  // Left
-                    -1.0, 1.0, 1.0,       1.0, 0.0, 0.0,
-                    -1.0, -1.0, 1.0,      1.0, 0.0, 0.0,
-                    -1.0, -1.0, -1.0,     1.0, 0.0, 0.0,
-                    -1.0, 1.0, -1.0,      1.0, 0.0, 0.0,
-                  // Right
-                    1.0, 1.0, 1.0,        0.0, 0.0, 1.0,
-                    1.0, -1.0, 1.0,       0.0, 0.0, 1.0,
-                    1.0, -1.0, -1.0,      0.0, 0.0, 1.0,
-                    1.0, 1.0, -1.0,       0.0, 0.0, 1.0,
-                  // Front
-                    1.0, 1.0, 1.0,        0.0, 1.0, 1.0,
-                    1.0, -1.0, 1.0,       0.0, 1.0, 1.0,
-                    -1.0, -1.0, 1.0,      0.0, 1.0, 1.0,
-                    -1.0, 1.0, 1.0,       0.0, 1.0, 1.0,
-                  // Back
-                    1.0, 1.0, -1.0,       1.0, 1.0, 0.0,
-                    1.0, -1.0, -1.0,      1.0, 1.0, 0.0,
-                    -1.0, -1.0, -1.0,     1.0, 1.0, 0.0,
-                    -1.0, 1.0, -1.0,      1.0, 1.0, 0.0,
-                  // Bottom
-                    -1.0, -1.0, -1.0,     1.0, 0.0, 1.0,
-                    -1.0, -1.0, 1.0,      1.0, 0.0, 1.0,
-                    1.0, -1.0, 1.0,       1.0, 0.0, 1.0,
-                    1.0, -1.0, -1.0,      1.0, 0.0, 1.0                              
+                    0.0, 0.5, 0.0,     1.0, 1.0, 0.0,
+                    -0.5, -0.5, 0.0,   0.7, 0.0, 1.0,
+                    0.5, -0.5, 0.0,    0.1, 1.0, 0.6
                 ];
-//which set of verixes form a triangle (int)
-var indices =
-[
-    // Top
-    0, 1, 2,
-    0, 2, 3,
-    // Left
-    5, 4, 6,
-    6, 4, 7,
-    // Right
-    8, 9, 10,
-    8, 10, 11,
-    // Front
-    13, 12, 14,
-    15, 14, 12,
-    // Back
-    16, 17, 18,
-    16, 18, 19,
-    // Bottom
-    21, 20, 22,
-    22, 20, 23
-];
-            var verticesBuffer = gl.createBuffer();
-            //Global bind points are (punkt odniesienia) attacheing to the ARRAY_BUFFER
-            //binding verticesBuffer with ARRAY_BUFFER
-            gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-            //positions are getting attach to the verticesBuffer(due to binded ARRAY_BUFFER)
+            //positions are getting attach to the positionBuffer(due to binded ARRAY_BUFFER)
             //STATIC_DRAW - the data optimalization for draw
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
- 
-            var indexBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);             
-            
             //Turning attributes on to take them from buffer
             gl.enableVertexAttribArray(positionAttribLocation);
             gl.enableVertexAttribArray(colorAttribLocation);
@@ -218,43 +165,29 @@ var indices =
                 6 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
                 3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
             );
-            //variables for drawElements
+            //variables for drawArrays
             var primitiveType = gl.TRIANGLES;
             var offset = 0;
             var count = 3;   //vertex shader will be execiuted 3 times
             //creating identity matrix
             var identityMatrix = new Float32Array(16);
             mat4.identity(identityMatrix);
-            //creating rotation matrices
-            var xRotationMatrix = new Float32Array(16);
-            var yRotationMatrix = new Float32Array(16);
-            //one full rotation (speed)
-            var v_angle = 1000*2*Math.PI/5;
-            //dont draw two sides of faces
-            gl.enable(gl.CULL_FACE);
-            //setting which side of faces should be shown
-            //gl.cullFace(gl.FRONT);
-            gl.cullFace(gl.BACK);
-            //check which faces are closest to camera, and render it
-            gl.enable(gl.DEPTH_TEST);
-            //
+            //one full rotation every 6s
+            var v_angle = 1000*2*Math.PI/6;
+           //
             //Main render loop
             //
             var loop = function(){
                 angle = performance.now()/v_angle; 
-                //rotate(receiving matrix, matrix to rotate, angle to rotate (rad), axis to rotate around) 
-                //mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
-                mat4.rotate(xRotationMatrix, identityMatrix, angle, [1.0, 0.0, 0.0])
-                mat4.rotate(yRotationMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
-                mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+                //rotate(receiving matrix, matrix to rotate, angle to rotate rad, axis to rotate around) 
+                mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
                 //update worldMatrix
                 gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
 
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
                 //render multiple sets of primitives from array data
-                //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
-                gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+                gl.drawArrays(primitiveType, offset, count);
                 requestAnimationFrame(loop);
             };
             requestAnimationFrame(loop);
