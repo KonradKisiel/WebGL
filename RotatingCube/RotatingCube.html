@@ -74,21 +74,12 @@
         function init() {
             var canvas = document.getElementById("WebGL_canvas");
             gl = checkWebGL(canvas);
-            //fullscreen with max (square) possible size 
+            //fullscreen with max possible size 
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            if (window.innerWidth > window.innerHeight) {
-                window.innerWidth = window.innerHeight;
-            }
-            else {
-                window.innerHeight = window.innerWidth;
-            }
             gl.viewportWidth = window.innerWidth;
             gl.viewportHeight = window.innerHeight;
-            gl.viewport((canvas.width - window.innerWidth) / 2, (canvas.height - window.innerHeight) / 2, gl.viewportWidth, gl.viewportHeight);
-
-            gl.clearColor(0.0, 0.0, 0.0, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
             //[telling that we want to use two fragments of pipeline together in program]
             //creating program
@@ -125,8 +116,11 @@
             var projMatrix = new Float32Array(16);
             //creating identity matrix
             mat4.identity(worldMatrix);
-            mat4.identity(viewMatrix);
-            mat4.identity(projMatrix);
+            //glMatrix Function lookAt(out[x, y, z], eye, center, up)
+            mat4.lookAt(viewMatrix, [0.0, 1.0, -2.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
+            //glmatrix perspective (out, fov in radians, seting aspect ratio, nearest, farest possible psn)
+            mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, 0.1, 1000.0)
+            //mat4.identity(projMatrix);
             //sending matrices to shader, 4x4 float matrix
             //WebGLRenderingContext.uniformMatrix2fv(location, transpose, value)
             //WebGLUniformLocation, always FALSE for webGL, Float32Array
@@ -170,11 +164,32 @@
                 6 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
                 3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
             );
-            //render multiple sets of primitives from array data
+            //variables for drawArrays
             var primitiveType = gl.TRIANGLES;
             var offset = 0;
             var count = 3;   //vertex shader will be execiuted 3 times
-            gl.drawArrays(primitiveType, offset, count);
+            //creating identity matrix
+            var identityMatrix = new Float32Array(16);
+            mat4.identity(identityMatrix);
+            //one full rotation every 6s
+            var v_angle = 1000*2*Math.PI/6;
+           //
+            //Main render loop
+            //
+            var loop = function(){
+                angle = performance.now()/v_angle; 
+                //rotate(receiving matrix, matrix to rotate, angle to rotate rad, axis to rotate around) 
+                mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
+                //update worldMatrix
+                gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+
+                gl.clearColor(0.0, 0.0, 0.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                //render multiple sets of primitives from array data
+                gl.drawArrays(primitiveType, offset, count);
+                requestAnimationFrame(loop);
+            };
+            requestAnimationFrame(loop);
         }
     </script>
     <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
