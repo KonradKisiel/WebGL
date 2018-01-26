@@ -1,0 +1,305 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <title>WebGL Textured Cube</title>
+    <meta name="author" content="Konrad Kisiel">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, height=device-height, minimum-scale=1.0, maximum-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        html,
+        body {
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body onload="init();">
+    <img src="RTS_Crate.png" id="texture" width="0" height="0">
+    <script id="2d-vertex-shader" type="notjs">
+        precision mediump float;
+        attribute vec3 a_position;
+        //attribute vec3 a_color;
+        //texture cordinates
+        attribute vec2 a_textCord;
+        //varying vec3 v_fragColor;
+        varying vec2 v_fragTextCord;
+        //rotation
+        uniform mat4 u_mWorld;
+        //camera
+        uniform mat4 u_mView;
+        uniform mat4 u_mProj;
+        void main()
+        {
+            //passes texture cordinates to fragment shader
+            v_fragTextCord = a_textCord;
+            //transformation happenes in rverse order
+            gl_Position = u_mProj * u_mView * u_mWorld * vec4(a_position, 1.0);
+        }
+    </script>
+
+    <script id="2d-fragment-shader" type="notjs">
+        precision mediump float;
+        //text cordinates from vertex shader
+        varying vec2 v_fragTextCord;
+        //sampling an image, automaticly get loaded img from GPU
+        uniform sampler2D u_s2D_texture;
+        void main()
+        {   //texture2D grabs the information from u_s2D_texture to frgment shader through v_fragTextCord
+            gl_FragColor = texture2D(u_s2D_texture, v_fragTextCord);
+            //gl_FragColor = vec4(v_fragTextCord, 1.0);
+        }
+    </script>
+    <script src="gl-matrix-min.js"></script>
+    <script type="text/javascript">
+        function checkWebGL(canvas) {
+            var ctx = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], gl;
+            for (var i = 0; i < ctx.length; i++) {
+                try { gl = canvas.getContext(ctx[i]); }
+                catch (e) { }
+                if (gl) break;
+            }
+            if (!gl) alert('Your browser does not support WebGL');
+            return gl;
+        }
+        //basic function overloading, adding error checking
+        function createShader(gl, type, source) {
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+            if (success) {
+                return shader;
+            }
+            console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+        }
+
+        function init() {
+            var canvas = document.getElementById("WebGL_canvas");
+            gl = checkWebGL(canvas);
+            //fullscreen with max possible size 
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewportWidth = window.innerWidth;
+            gl.viewportHeight = window.innerHeight;
+            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+
+            //[telling that we want to use two fragments of pipeline together in program]
+            //creating program
+            var program = gl.createProgram();
+            //creating and attaching shaders to program
+            gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, document.getElementById("2d-vertex-shader").text));
+            gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, document.getElementById("2d-fragment-shader").text));
+            //linking things together
+            gl.linkProgram(program);
+            //checking for link errors
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('ERROR linking program', gl.getProgramInfoLog(program));
+                return;
+            }
+            //catching additional errors
+            gl.validateProgram(program);
+            if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+                console.error('ERROR validating program!', gl.getProgramInfoLog(program));
+                return;
+            }
+            //tell WebGL state machine which shaders program shold be active   
+            gl.useProgram(program);
+            //attaching atributes to GPU ARRAY_BUFFER (from CPU)
+            var positionAttribLocation = gl.getAttribLocation(program, "a_position");
+            var textCordAttribLocation = gl.getAttribLocation(program, 'a_textCord');
+         
+            //attaching uniforms to GPU ARRAY_BUFFER (from CPU)
+            var matWorldUniformLocation = gl.getUniformLocation(program, "u_mWorld");
+            var matViewUniformLocation = gl.getUniformLocation(program, "u_mView");
+            var matProjUniformLocation = gl.getUniformLocation(program, "u_mProj");
+            //creating matrices with 0.0
+            var worldMatrix = new Float32Array(16);
+            var viewMatrix = new Float32Array(16);
+            var projMatrix = new Float32Array(16);
+            //creating identity matrix
+            mat4.identity(worldMatrix);
+            //glMatrix Function lookAt(out[x, y, z], eye, center, up)
+            mat4.lookAt(viewMatrix, [0.0, 3.0, -5.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
+            //glmatrix perspective (out, fov in radians, seting aspect ratio, nearest, farest possible psn)
+            mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width/canvas.height, 0.1, 1000.0)
+            //mat4.identity(projMatrix);
+            //sending matrices to shader, 4x4 float matrix
+            //WebGLRenderingContext.uniformMatrix2fv(location, transpose, value)
+            //WebGLUniformLocation, always FALSE for webGL, Float32Array
+            gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+            gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
+            gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
+
+            //Cube vertives
+            //creating list of points (Vertex Data) in CPU
+            var vertices =
+                [ // X, Y, Z           U, V
+                  // Top
+                    -1.0, 1.0, -1.0,      0.0, 0.0,
+                    -1.0, 1.0, 1.0,       0.0, 1.0,
+                    1.0, 1.0, 1.0,        1.0, 1.0,
+                    1.0, 1.0, -1.0,       1.0, 0.0,
+                  // Left
+                    -1.0, 1.0, 1.0,       0.0, 1.0,
+                    -1.0, -1.0, 1.0,      0.0, 1.0,
+                    -1.0, -1.0, -1.0,     0.0, 0.0,
+                    -1.0, 1.0, -1.0,      0.0, 0.0, 
+                  // Right
+                    1.0, 1.0, 1.0,        1.0, 1.0,
+                    1.0, -1.0, 1.0,       1.0, 1.0,
+                    1.0, -1.0, -1.0,      1.0, 0.0,
+                    1.0, 1.0, -1.0,       1.0, 0.0,
+                  // Front
+                    1.0, 1.0, 1.0,        1.0, 1.0,
+                    1.0, -1.0, 1.0,       1.0, 1.0,
+                    -1.0, -1.0, 1.0,      0.0, 1.0,
+                    -1.0, 1.0, 1.0,       0.0, 1.0,
+                  // Back
+                    1.0, 1.0, -1.0,       1.0, 0.0,
+                    1.0, -1.0, -1.0,      1.0, 0.0,
+                    -1.0, -1.0, -1.0,     0.0, 0.0,
+                    -1.0, 1.0, -1.0,      0.0, 0.0,
+                  // Bottom
+                    -1.0, -1.0, -1.0,     0.0, 0.0,
+                    -1.0, -1.0, 1.0,      0.0, 1.0,
+                    1.0, -1.0, 1.0,       1.0, 1.0,
+                    1.0, -1.0, -1.0,      1.0, 0.0                           
+                ];
+//which set of verixes form a triangle (int)
+var indices =
+[
+    // Top
+    0, 1, 2,
+    0, 2, 3,
+    // Left
+    5, 4, 6,
+    6, 4, 7,
+    // Right
+    8, 9, 10,
+    8, 10, 11,
+    // Front
+    13, 12, 14,
+    15, 14, 12,
+    // Back
+    16, 17, 18,
+    16, 18, 19,
+    // Bottom
+    21, 20, 22,
+    22, 20, 23
+];
+            var verticesBuffer = gl.createBuffer();
+            //Global bind points are (punkt odniesienia) attacheing to the ARRAY_BUFFER
+            //binding verticesBuffer with ARRAY_BUFFER
+            gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+            //positions are getting attach to the verticesBuffer(due to binded ARRAY_BUFFER)
+            //STATIC_DRAW - the data optimalization for draw
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+ 
+            var indexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);             
+            
+            //Turning attributes on to take them from buffer
+            gl.enableVertexAttribArray(positionAttribLocation);
+            gl.enableVertexAttribArray(textCordAttribLocation);
+
+            //
+            // Create texture
+            //
+            //*********** IMPORTANT ***********
+            //The code must be runing on localserver/server 
+            //due to browsers security restrictions,
+            //problem with getting and setting texture
+            var boxTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, boxTexture);
+            // set texture parameters (target, pname, param) gl.TEXTURE_WRAP_(S/T) S=U, T=V, set the ege to repeat
+            // param = kind of repeating
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            //setting filtering method(LINEAR/NEAREST...) and inerpolation of img for scaling down(MIN) and up(MAG))
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            //https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/texImage2D
+            gl.texImage2D(
+            gl.TEXTURE_2D,     //target
+            0,                 //level of detail 0-base, n is the nth reduction of detail
+            gl.RGBA,           //internalformat: ALPHA/RGB/RGBA/LUMINANCE/LUMINANCE_ALPHA....
+            //                 //width in <img tags>
+            //                 //height also
+            //                 //no border
+            gl.RGBA,           //format - must be the same as internalformat
+            gl.UNSIGNED_BYTE,  //type - gl.UNSIGNED_BYTE: 8 bits per channel for gl.RGBA
+            document.getElementById('texture') //img data
+            );
+            //unbinding texture - 
+            gl.bindTexture(gl.TEXTURE_2D, null);
+
+            //specify layout of that attribute, object preparation (a_position)
+            gl.vertexAttribPointer(
+                positionAttribLocation, // Attribute location
+                3, //nr of elemnts per attributes (vec2 a_position)
+                gl.FLOAT, //type of elemnts, 32bit floats
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of an individual vertex
+                0 // Offset from the begining of a single vetex to this attribute
+            );
+
+            gl.vertexAttribPointer(
+                textCordAttribLocation, // Attribute location
+                2, //nr of elemnts per attributes
+                gl.FLOAT, //type of elemnts
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
+                3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
+            );
+            //variables for drawElements
+            var primitiveType = gl.TRIANGLES;
+            var offset = 0;
+            var count = 3;   //vertex shader will be execiuted 3 times
+            //creating identity matrix
+            var identityMatrix = new Float32Array(16);
+            mat4.identity(identityMatrix);
+            //creating rotation matrices
+            var xRotationMatrix = new Float32Array(16);
+            var yRotationMatrix = new Float32Array(16);
+            //one full rotation (speed)
+            var v_angle = 1000*2*Math.PI/5;
+            //dont draw two sides of faces
+            gl.enable(gl.CULL_FACE);
+            //setting which side of faces should be shown
+            //gl.cullFace(gl.FRONT);
+            gl.cullFace(gl.BACK);
+            //check which faces are closest to camera, and render it
+            gl.enable(gl.DEPTH_TEST);
+            //
+            //Main render loop
+            //
+            var loop = function(){
+                angle = performance.now()/v_angle; 
+                //rotate(receiving matrix, matrix to rotate, angle to rotate (rad), axis to rotate around) 
+                //mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
+                mat4.rotate(xRotationMatrix, identityMatrix, angle, [1.0, 0.0, 0.0])
+                mat4.rotate(yRotationMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
+                mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+                //update worldMatrix
+                gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+
+                gl.clearColor(1.0, 1.0, 1.0, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                //render multiple sets of primitives from array data
+                //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
+                gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+                requestAnimationFrame(loop);
+            };
+            requestAnimationFrame(loop);
+        }
+    </script>
+    <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
+</body>
+</html>
