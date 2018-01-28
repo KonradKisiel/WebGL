@@ -78,7 +78,6 @@
             console.log(gl.getShaderInfoLog(shader));
             gl.deleteShader(shader);
         }
-
         function init() {
             var canvas = document.getElementById("WebGL_canvas");
             gl = checkWebGL(canvas);
@@ -88,7 +87,6 @@
             gl.viewportWidth = window.innerWidth;
             gl.viewportHeight = window.innerHeight;
             gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-
             //[telling that we want to use two fragments of pipeline together in program]
             //creating program
             var program = gl.createProgram();
@@ -135,7 +133,6 @@
             gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
             gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
             gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-
             //Cube vertives
             //creating list of points (Vertex Data) in CPU
             var vertices =
@@ -219,7 +216,6 @@ var indices =
                 5 * Float32Array.BYTES_PER_ELEMENT,// Size of an individual vertex
                 0 // Offset from the begining of a single vetex to this attribute
             );
-
             gl.vertexAttribPointer(
                 textCordAttribLocation, // Attribute location
                 2, //nr of elemnts per attributes
@@ -228,11 +224,9 @@ var indices =
                 5 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
                 3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
             );
-
             //Turning attributes on to take them from buffer
             gl.enableVertexAttribArray(positionAttribLocation);
             gl.enableVertexAttribArray(textCordAttribLocation);
-
             //
             // Create texture
             //
@@ -262,8 +256,7 @@ var indices =
             document.getElementById('texture') //img data
             );
             //unbinding texture - 
-            gl.bindTexture(gl.TEXTURE_2D, null);
-
+            //gl.bindTexture(gl.TEXTURE_2D, null);
             //creating identity matrix
             var identityMatrix = new Float32Array(16);
             mat4.identity(identityMatrix);
@@ -291,10 +284,8 @@ var indices =
                 mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
                 //update worldMatrix
                 gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-
                 gl.clearColor(1.0, 1.0, 1.0, 1.0);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-                gl.bindTexture(gl.TEXTURE_2D, boxTexture);
                 //render multiple sets of primitives from array data
                 //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
                 gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
