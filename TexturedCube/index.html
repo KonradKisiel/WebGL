@@ -139,38 +139,43 @@
             //Cube vertives
             //creating list of points (Vertex Data) in CPU
             var vertices =
-                [ // X, Y, Z           U, V
-                  // Top
-                    -1.0, 1.0, -1.0,      0.0, 0.0,
-                    -1.0, 1.0, 1.0,       0.0, 1.0,
-                    1.0, 1.0, 1.0,        1.0, 1.0,
-                    1.0, 1.0, -1.0,       1.0, 0.0,
-                  // Left
-                    -1.0, 1.0, 1.0,       0.0, 1.0,
-                    -1.0, -1.0, 1.0,      0.0, 1.0,
-                    -1.0, -1.0, -1.0,     0.0, 0.0,
-                    -1.0, 1.0, -1.0,      0.0, 0.0, 
-                  // Right
-                    1.0, 1.0, 1.0,        1.0, 1.0,
-                    1.0, -1.0, 1.0,       1.0, 1.0,
-                    1.0, -1.0, -1.0,      1.0, 0.0,
-                    1.0, 1.0, -1.0,       1.0, 0.0,
-                  // Front
-                    1.0, 1.0, 1.0,        1.0, 1.0,
-                    1.0, -1.0, 1.0,       1.0, 1.0,
-                    -1.0, -1.0, 1.0,      0.0, 1.0,
-                    -1.0, 1.0, 1.0,       0.0, 1.0,
-                  // Back
-                    1.0, 1.0, -1.0,       1.0, 0.0,
-                    1.0, -1.0, -1.0,      1.0, 0.0,
-                    -1.0, -1.0, -1.0,     0.0, 0.0,
-                    -1.0, 1.0, -1.0,      0.0, 0.0,
-                  // Bottom
-                    -1.0, -1.0, -1.0,     0.0, 0.0,
-                    -1.0, -1.0, 1.0,      0.0, 1.0,
-                    1.0, -1.0, 1.0,       1.0, 1.0,
-                    1.0, -1.0, -1.0,      1.0, 0.0                           
-                ];
+            [ // X, Y, Z           U, V
+            // Top
+            -1.0, 1.0, -1.0,   0, 0,
+            -1.0, 1.0, 1.0,    0, 1,
+            1.0, 1.0, 1.0,     1, 1,
+            1.0, 1.0, -1.0,    1, 0,
+    
+            // Left
+            -1.0, 1.0, 1.0,    0, 0,
+            -1.0, -1.0, 1.0,   1, 0,
+            -1.0, -1.0, -1.0,  1, 1,
+            -1.0, 1.0, -1.0,   0, 1,
+    
+            // Right
+            1.0, 1.0, 1.0,    1, 1,
+            1.0, -1.0, 1.0,   0, 1,
+            1.0, -1.0, -1.0,  0, 0,
+            1.0, 1.0, -1.0,   1, 0,
+    
+            // Front
+            1.0, 1.0, 1.0,    1, 1,
+            1.0, -1.0, 1.0,    1, 0,
+            -1.0, -1.0, 1.0,    0, 0,
+            -1.0, 1.0, 1.0,    0, 1,
+    
+            // Back
+            1.0, 1.0, -1.0,    0, 0,
+            1.0, -1.0, -1.0,    0, 1,
+            -1.0, -1.0, -1.0,    1, 1,
+            -1.0, 1.0, -1.0,    1, 0,
+    
+            // Bottom
+            -1.0, -1.0, -1.0,   1, 1,
+            -1.0, -1.0, 1.0,    1, 0,
+            1.0, -1.0, 1.0,     0, 0,
+            1.0, -1.0, -1.0,    0, 1,
+        ];
 //which set of verixes form a triangle (int)
 var indices =
 [
@@ -205,6 +210,25 @@ var indices =
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);             
             
+             //specify layout of that attribute, object preparation (a_position)
+             gl.vertexAttribPointer(
+                positionAttribLocation, // Attribute location
+                3, //nr of elemnts per attributes (vec2 a_position)
+                gl.FLOAT, //type of elemnts, 32bit floats
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of an individual vertex
+                0 // Offset from the begining of a single vetex to this attribute
+            );
+
+            gl.vertexAttribPointer(
+                textCordAttribLocation, // Attribute location
+                2, //nr of elemnts per attributes
+                gl.FLOAT, //type of elemnts
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
+                3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
+            );
+
             //Turning attributes on to take them from buffer
             gl.enableVertexAttribArray(positionAttribLocation);
             gl.enableVertexAttribArray(textCordAttribLocation);
@@ -240,28 +264,6 @@ var indices =
             //unbinding texture - 
             gl.bindTexture(gl.TEXTURE_2D, null);
 
-            //specify layout of that attribute, object preparation (a_position)
-            gl.vertexAttribPointer(
-                positionAttribLocation, // Attribute location
-                3, //nr of elemnts per attributes (vec2 a_position)
-                gl.FLOAT, //type of elemnts, 32bit floats
-                gl.FALSE, //data normalization
-                5 * Float32Array.BYTES_PER_ELEMENT,// Size of an individual vertex
-                0 // Offset from the begining of a single vetex to this attribute
-            );
-
-            gl.vertexAttribPointer(
-                textCordAttribLocation, // Attribute location
-                2, //nr of elemnts per attributes
-                gl.FLOAT, //type of elemnts
-                gl.FALSE, //data normalization
-                5 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
-                3 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
-            );
-            //variables for drawElements
-            var primitiveType = gl.TRIANGLES;
-            var offset = 0;
-            var count = 3;   //vertex shader will be execiuted 3 times
             //creating identity matrix
             var identityMatrix = new Float32Array(16);
             mat4.identity(identityMatrix);
@@ -292,6 +294,7 @@ var indices =
 
                 gl.clearColor(1.0, 1.0, 1.0, 1.0);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                gl.bindTexture(gl.TEXTURE_2D, boxTexture);
                 //render multiple sets of primitives from array data
                 //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
                 gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
