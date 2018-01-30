@@ -3,24 +3,24 @@ var j3d;
 // LOADING RESOURCES
 //
 var init = function () {
-	loadTextResource('./Shaders/Phong/shader.vs.glsl', function (vsErr, vsText) {
+	loadTextResource('./Shaders/Toon/shader.vs.glsl', function (vsErr, vsText) {
 		if (vsErr) {
-			alert('Fatal error getting vertex shader (see console)');
+			alert('Error getting vertex shader (see console)');
 			console.error(vsErr);
 		} else {
-			loadTextResource('./Shaders/Phong/shader.fs.glsl', function (fsErr, fsText) {
+			loadTextResource('./Shaders/Toon/shader.fs.glsl', function (fsErr, fsText) {
 				if (fsErr) {
-					alert('Fatal error getting fragment shader (see console)');
+					alert('Error getting fragment shader (see console)');
 					console.error(fsErr);
 				} else {
 					loadJSONResource('./ModelMig105.json', function (modelErr, model) {
 						if (modelErr) {
-							alert('Fatal error getting model (see console)');
+							alert('Error getting model (see console)');
 							console.error(fsErr);
 						} else {
 							loadImage('./TextureMig105.png', function (imgErr, txt) {
 								if (imgErr) {
-									alert('Fatal error getting texture (see console)');
+									alert('Error getting texture (see console)');
 									console.error(imgErr);
 								} else { 
 									run(vsText, fsText, txt, model);
@@ -152,7 +152,7 @@ function run(vertexShaderText, fragmentShaderText, texture, json3D) {
     //creating identity matrix
     mat4.identity(worldMatrix);
     //glMatrix Function lookAt(out[x, y, z], eye, up, center)
-    mat4.lookAt(viewMatrix, [2.0, 3.0, -6.0], [0.0, -0.7, 0.0], [0.0, 1.0, 0.0]);
+    mat4.lookAt(viewMatrix, [2.0, 3.0, -7.0], [0.0, -0.7, 0.0], [0.0, 1.0, 0.0]);
     //glmatrix perspective (out, fov in radians, seting aspect ratio, nearest, farest possible psn)   
     //fullscreen mat4.perspective(projMatrix, glMatrix.toRadian(45), canvas.width / canvas.height, 0.1, 1000.0);
     mat4.perspective(projMatrix, glMatrix.toRadian(45), 1.0, 0.1, 1000.0);
@@ -271,12 +271,12 @@ function run(vertexShaderText, fragmentShaderText, texture, json3D) {
         angle = performance.now() / v_angle;
         //rotate(receiving matrix, matrix to rotate, angle to rotate (rad), axis to rotate around) 
         //mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
-        mat4.rotate(xRotationMatrix, identityMatrix, angle, [1.0, 0.0, 0.0])
+        //mat4.rotate(xRotationMatrix, identityMatrix, angle, [1.0, 0.0, 0.0])
         mat4.rotate(yRotationMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
-        mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+        //mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
         //update worldMatrix
         gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, yRotationMatrix);
-        gl.clearColor(1.0, 1.0, 1.0, 1.0);
+        gl.clearColor(0.35, 0.0, 0.55, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         //render multiple sets of primitives from array data
         //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
