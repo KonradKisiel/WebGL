@@ -1,0 +1,172 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <title>WebGL starting template</title>
+    <meta name="author" content="Konrad Kisiel">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, height=device-height, minimum-scale=1.0, maximum-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body onload="init();">
+        <script id="2d-vertex-shader" type="notjs">              
+                 // an attribute will receive data from a buffer
+                 attribute vec4 a_position;
+                 uniform vec2 u_resolution;
+
+                 // all shaders have a main function
+                 void main() {
+                
+                   // gl_Position is a special variable a vertex shader
+                   // is responsible for setting
+                   gl_Position = a_position;
+                 }        
+               </script>         
+               <script id="2d-fragment-shader" type="notjs">           
+                 // fragment shaders don't have a default precision so we need
+                 // to pick one. mediump is a good default
+                 precision mediump float;
+                 uniform vec4 u_color;
+
+                 void main() {
+                   // gl_FragColor is a special variable a fragment shader
+                   // is responsible for setting
+                   gl_FragColor = u_color;
+                 }              
+               </script>
+    <script type="text/javascript">
+        //createShader overwriting
+        function createShader(gl, type, source){
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+            if(success){
+                return shader;
+            }
+            console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+        }
+
+        function init() {
+            var canvas = document.getElementById("WebGL_canvas");
+            ///////////////////////////////////////////////////////
+            //getting context
+            var ctx = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], gl;
+            for (var i = 0; i < ctx.length; i++) {
+                try { gl = canvas.getContext(ctx[i]); }
+                catch (e) { }
+                if (gl) break;
+            }
+            if (!gl) alert('Your browser does not support WebGL');        
+            ////////////////////////////////////////////////////////
+            //always in center with max possible size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (window.innerWidth > window.innerHeight) {
+                window.innerWidth = window.innerHeight;
+            }
+            else {
+                window.innerHeight = window.innerWidth;
+            }
+            gl.viewportWidth = window.innerWidth;
+            gl.viewportHeight = window.innerHeight;
+            gl.viewport((canvas.width - window.innerWidth) / 2, (canvas.height - window.innerHeight) / 2, gl.viewportWidth, gl.viewportHeight);
+            //////////////////////////////////////////////////////
+
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            //[telling that we want to use two fragments of pipeline together in program]
+            //creating program
+            var program = gl.createProgram();
+            //creating and attaching shaders to program
+            gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, document.getElementById("2d-vertex-shader").text));
+            gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, document.getElementById("2d-fragment-shader").text));
+            //linking things together
+            gl.linkProgram(program);
+            //checking for link errors
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('ERROR linking program', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+            }
+            //OPTIONAL CHECKING
+            //catching additional errors
+            gl.validateProgram(program);
+            if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+                console.error('ERROR validating program!', gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+            }
+
+            
+            //attaching atribute to GPU (from CPU)
+            var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+            var colorAttributeLocation = gl.getUniformLocation(program, "u_color");
+            //creating psn buffer
+            var positionBuffer = gl.createBuffer();
+            //Global bind points are (punkt odniesienia) attacheing to the ARRAY_BUFFER
+            //binding positionBuffer with ARRAY_BUFFER
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+            //Turning attribute on to take it from buffer
+            gl.enableVertexAttribArray(positionAttributeLocation);
+            //specifing how to pull the data out
+            //Tell th attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+            var size = 2;           // 2 components per iteration, nr of the elements per attribute
+            var type = gl.FLOAT;    // the data is 32bit floats
+            var normalize = false;  // don't normalize the data
+            var stride = 0;         // size of each element
+            var offset = 0;         // offset from the begining
+            //binding ARRAY_BUFFER to attribute, after this line attribute is using positionBuffer, ARRAY_BUFFER is free to use
+            gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
+            for (var j = 0; j < 50; ++j){
+                  // Set a random color.
+            gl.uniform4f(colorAttributeLocation, Math.random(), Math.random(), Math.random(), 1);
+                // Setup a random rectangle
+    // This will write to positionBuffer because
+    // its the last thing we bound on the ARRAY_BUFFER
+    // bind point
+            setRectangle(gl, (Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2, (Math.random()-0.5)*2);
+          
+            //positions are getting attach to the positionBuffer(due to binded ARRAY_BUFFER)
+            //telling WebGL which shader program to execute    
+            gl.useProgram(program);
+            //GlSL program execution
+            var primitiveType = gl.TRIANGLES;
+            var offset = 0;
+            var count = 6;   //vertex shader will be execiuted 3 times
+            gl.drawArrays(primitiveType, offset, count);
+            }
+        }
+
+        function setRectangle(gl, x, y, width, height) {
+            var x1 = x;
+            var x2 = x + width;
+            var y1 = y;
+            var y2 = y + height;
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+               x1, y1,
+               x2, y1,
+               x1, y2,
+               x1, y2,
+               x2, y1,
+               x2, y2,
+            ]), gl.STATIC_DRAW);
+        }
+    </script>
+    <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
+</body>
+
+</html>

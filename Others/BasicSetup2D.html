@@ -1,0 +1,163 @@
+<!DOCTYPE>
+<html>
+
+<head>
+    <title>WebGL starting template</title>
+    <meta name="author" content="Konrad Kisiel">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, height=device-height, minimum-scale=1.0, maximum-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            margin: 0px;
+        }
+    </style>
+</head>
+
+<body onload="init();">
+    <script id="2d-vertex-shader" type="notjs">
+        precision mediump float;
+        attribute vec2 a_position;
+        attribute vec3 a_color;
+        varying vec3 fragColor;
+        void main()
+        {
+            fragColor = a_color;
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="2d-fragment-shader" type="notjs">
+        precision mediump float;
+        varying vec3 fragColor;
+        void main()
+        {
+            gl_FragColor = vec4(fragColor, 1.0);
+        }
+    </script>
+    <script type="text/javascript">
+        function checkWebGL(canvas) {
+            var ctx = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], gl;
+            for (var i = 0; i < ctx.length; i++) {
+                try { gl = canvas.getContext(ctx[i]); }
+                catch (e) { }
+                if (gl) break;
+            }
+            if (!gl) alert('Your browser does not support WebGL');
+            return gl;
+        }
+        //basic function overloading, adding error checking
+        function createShader(gl, type, source) {
+            var shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+            if (success) {
+                return shader;
+            }
+            console.log(gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+        }
+
+        function init() {
+            var canvas = document.getElementById("WebGL_canvas");
+            gl = checkWebGL(canvas);
+            /*
+            //fullscreen fixed size
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                gl.viewportWidth = canvas.width;
+                gl.viewportHeight = canvas.height;
+                gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+            */
+            //fullscreen with max (square) possible size 
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (window.innerWidth > window.innerHeight) {
+                window.innerWidth = window.innerHeight;
+            }
+            else {
+                window.innerHeight = window.innerWidth;
+            }
+            gl.viewportWidth = window.innerWidth;
+            gl.viewportHeight = window.innerHeight;
+            gl.viewport((canvas.width - window.innerWidth) / 2, (canvas.height - window.innerHeight) / 2, gl.viewportWidth, gl.viewportHeight);
+            
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            //[telling that we want to use two fragments of pipeline together in program]
+            //creating program
+            var program = gl.createProgram();
+            //creating and attaching shaders to program
+            gl.attachShader(program, createShader(gl, gl.VERTEX_SHADER, document.getElementById("2d-vertex-shader").text));
+            gl.attachShader(program, createShader(gl, gl.FRAGMENT_SHADER, document.getElementById("2d-fragment-shader").text));
+            //linking things together
+            gl.linkProgram(program);
+            //checking for link errors
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('ERROR linking program', gl.getProgramInfoLog(program));
+                return;
+            }
+            //catching additional errors
+            gl.validateProgram(program);
+            if (!gl.getProgramParameter(program, gl.VALIDATE_STATUS)) {
+                console.error('ERROR validating program!', gl.getProgramInfoLog(program));
+                return;
+            }
+            //telling WebGL which shaders program to execute    
+            gl.useProgram(program);
+            //attaching atributes to GPU ARRAY_BUFFER (from CPU)
+            var positionAttribLocation = gl.getAttribLocation(program, "a_position");
+            var colorAttribLocation = gl.getAttribLocation(program, 'a_color');
+            //creating psn buffer
+            var positionBuffer = gl.createBuffer();
+            //Global bind points are (punkt odniesienia) attacheing to the ARRAY_BUFFER
+            //binding positionBuffer with ARRAY_BUFFER
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            //creating list of points (Vertex Data) in CPU
+            var vertices =
+                [ // X, Y   R, G, B
+                    0.0, 0.5, 1.0, 1.0, 0.0,
+                    -0.5, -0.5, 0.7, 0.0, 1.0,
+                    0.5, -0.5, 0.1, 1.0, 0.6
+                ];
+            //positions are getting attach to the positionBuffer(due to binded ARRAY_BUFFER)
+            //STATIC_DRAW - the data optimalization for draw
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            //Turning attributes on to take them from buffer
+            gl.enableVertexAttribArray(positionAttribLocation);
+            gl.enableVertexAttribArray(colorAttribLocation);
+            //specify layout of that attribute, object preparation (a_position)
+            gl.vertexAttribPointer(
+                positionAttribLocation, // Attribute location
+                2, //nr of elemnts per attributes (vec2 a_position)
+                gl.FLOAT, //type of elemnts, 32bit floats
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of an individual vertex
+                0 // Offset from the begining of a single vetex to this attribute
+            );
+
+            gl.vertexAttribPointer(
+                colorAttribLocation, // Attribute location
+                3, //nr of elemnts per attributes (vec3 vertColor)
+                gl.FLOAT, //type of elemnts
+                gl.FALSE, //data normalization
+                5 * Float32Array.BYTES_PER_ELEMENT,// Size of each element
+                2 * Float32Array.BYTES_PER_ELEMENT // Offset from the begining of a single vetex to this attribute
+            );
+            //render multiple sets of primitives from array data
+            var primitiveType = gl.TRIANGLES;
+            var offset = 0;
+            var count = 3;   //vertex shader will be execiuted 3 times
+            gl.drawArrays(primitiveType, offset, count);
+        }
+    </script>
+    <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
+</body>
+</html>
