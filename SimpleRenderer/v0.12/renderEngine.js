@@ -13,16 +13,16 @@ var init = function () {
 					alert('Error getting fragment shader (see console)');
 					console.error(fsErr);
 				} else {
-                    //loadJSONResource('./3D/ModelMig105.json', function (modelErr, model) {
+                    loadJSONResource('./3D/ModelMig105.json', function (modelErr, model) {
 					//loadJSONResource('./3D/LippischP13a.json', function (modelErr, model) {
-                        loadJSONResource('./3D/LippischP13a_144896tri.json', function (modelErr, model) {
+                        //loadJSONResource('./3D/LippischP13a_144896tri.json', function (modelErr, model) {
 						if (modelErr) {
 							alert('Error getting model (see console)');
 							console.error(fsErr);
 						} else {
-                            //loadImage('./Textures/TextureMig105.png', function (imgErr, txt) {
+                            loadImage('./Textures/TextureMig105.png', function (imgErr, txt) {
 							//loadImage('./Textures/Lippisch._P13a_text512.png', function (imgErr, txt) {
-                                loadImage('./Textures/Lippisch2048.png', function (imgErr, txt) {
+                                //loadImage('./Textures/Lippisch2048.png', function (imgErr, txt) {
 								if (imgErr) {
 									alert('Error getting texture (see console)');
 									console.error(imgErr);

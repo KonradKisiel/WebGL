@@ -69,7 +69,7 @@ var loadJSONResource = function (url, callback){
     });
 };
 
-function checkWebGL(canvas) {
+function initWebGL(canvas) {
     var ctx = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"], gl;
     for (var i = 0; i < ctx.length; i++) {
         try { gl = canvas.getContext(ctx[i]); }
@@ -115,7 +115,7 @@ function autoSizeSquare(canvas){
 function run(vertexShaderText, fragmentShaderText, texture, json3D) {
     j3d = json3D;
     var canvas = document.getElementById("WebGL_canvas");
-    gl = checkWebGL(canvas);
+    gl = initWebGL(canvas);
     autoSizeSquare(canvas);
 
     var program = gl.createProgram();
@@ -259,24 +259,35 @@ function run(vertexShaderText, fragmentShaderText, texture, json3D) {
     gl.cullFace(gl.BACK);
     //check which faces are closest to camera, and render it
     gl.enable(gl.DEPTH_TEST);
+
     //
     //Main render loop
     //
-    var loop = function () {
-        rotationSpeed = 10;//performance.now() / v_rotation;
+    var render = function () {
+        rotationSpeed = performance.now() / v_rotation;
         //rotate(receiving matrix, matrix to rotate, angle to rotate (rad), axis to rotate around) 
         //mat4.rotate(worldMatrix, identityMatrix, angle, [0.0, 1.0, 0.0]);
         //mat4.rotate(xRotationMatrix, identityMatrix, angle, [1.0, 0.0, 0.0])
-        mat4.rotate(yRotationMatrix, identityMatrix, rotationSpeed, [0.0, 1.0, 0.0]);
-        //mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+          mat4.rotate(yRotationMatrix, identityMatrix, rotationSpeed, [0.0, 1.0, 0.0]);
+
+       // mat4.fromTranslation(identityMatrix, [0, 0, -6]);
+        //mat4.mul(identityMatrix, mouseRotationMatrix, mouseRotationMatrix);
+         //mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+
+
+        // mat4.rotate(mouseRotationMatrix, identityMatrix, rotationSpeed, [0.0, 1.0, 0.0]);
+         //mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
+         //update worldMatrix
+         gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, yRotationMatrix);
+
         //update worldMatrix
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, yRotationMatrix);
-        gl.clearColor(0.35, 0.0, 0.55, 1.0);
+        //gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, mouseRotationMatrix);
+      //  gl.clearColor(0.35, 0.0, 0.55, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         //render multiple sets of primitives from array data
         //drawElements(gl.TRIANGLES, cont of points to draw, type, offset from begining)
         gl.drawElements(gl.TRIANGLES, json3Dindices.length, gl.UNSIGNED_SHORT, 0);
-        requestAnimationFrame(loop);
+        requestAnimationFrame(render);
     };
-    requestAnimationFrame(loop);
+    requestAnimationFrame(render);
 }
