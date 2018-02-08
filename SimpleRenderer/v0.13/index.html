@@ -7,12 +7,69 @@
     <meta charset="utf-8">
     <style>
     html,body {margin: 0px;}
-    #WebGL_canvas {background: radial-gradient(circle, #5E297A, #200); position:absolute;};
+    #WebGL_canvas {background: radial-gradient(circle, #5E297A, #200); position:absolute;}
+    #loadingtext {
+            position: absolute;
+            top: 250px;
+            left: 150px;
+            font-size: 2em;
+            color: white;
+        }
     </style>
 </head>
-<body onload="init();">
+<body onload="main();">
+        <script id="vertex-shader" type="x-shader/x-vertex">
+                precision mediump float;
+                attribute vec3 a_position;
+                attribute vec2 a_textCord;
+                attribute vec3 a_vertNormal;
+                
+                varying vec2 v_fragTextCord;
+                varying vec3 v_fragNormal;
+                
+                uniform mat4 u_mWorld;
+                uniform mat4 u_mView;
+                uniform mat4 u_mProj;
+                void main()
+                {
+                    v_fragTextCord = a_textCord;
+                    //normals related to world psn
+                    v_fragNormal = (u_mWorld * vec4(a_vertNormal, 0.0)).xyz;
+                    //1.0 makes translation possible
+                    gl_Position = u_mProj * u_mView * u_mWorld * vec4(a_position, 1.0);
+                }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+            precision mediump float;
+            
+            varying vec2 v_fragTextCord;
+            varying vec3 v_fragNormal;
+            
+            uniform sampler2D u_s2D_texture;
+            void main()
+            {  
+                vec3 ambientLightIntensity = vec3(0.1, 0.12, 0.12);
+                vec3 moonLightIntensity = vec3(0.12, 0.18, 0.45);
+                vec3 sunLightIntensity = vec3(0.77, 0.57, 0.17);
+                //directional light
+                vec3 sunLightDirection = normalize(vec3(-10.0, 12.0, -7.0));
+                vec3 moonLightDirection = normalize(vec3(5.0, 15.0, 15.0));
+            
+                vec3 sufaceNormal = normalize(v_fragNormal);
+            
+                vec4 texel = texture2D(u_s2D_texture, v_fragTextCord);
+                vec3 lightIntensity = ambientLightIntensity +
+                    sunLightIntensity*max(dot(step(0.3, v_fragNormal), sunLightDirection), 0.2)
+                    +moonLightIntensity*max(dot(step(0.3, v_fragNormal), moonLightDirection), 0.3);
+            
+                gl_FragColor = vec4(texel.rgb * lightIntensity, 1.0);
+            }
+            //there are also point lights, and spot lights
+    </script>
     <script src="gl-matrix-min.js"></script>
     <script src="renderEngine.js"></script>
     <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
+    <div id="loadingText">Loading...</div>
 </body>
 </html>

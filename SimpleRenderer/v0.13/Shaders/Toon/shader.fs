@@ -22,4 +22,3 @@ void main()
 
     gl_FragColor = vec4(texel.rgb * lightIntensity, 1.0);
 }
-//there are also point lights, and spot lights
