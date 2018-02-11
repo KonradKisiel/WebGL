@@ -1,31 +1,52 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>WebGL 3D Object Demo</title>
     <meta name="author" content="Konrad Kisiel">
     <meta name="viewport" content="width=device-width, user-scalable=yes, height=device-height, minimum-scale=1.0, maximum-scale=1.0">
     <meta charset="utf-8">
     <style>
-    html,body {margin: 0px;}
-    #WebGL_canvas {background: radial-gradient(circle, #5E297A, #200); position:absolute;}
-    .container {
-    display: flex;
-    justify-content: center;
-    align-content: center;
-    }
-    #loadingText {
+        html,
+        body {
+            margin: 0px;
+        }
+
+        #WebGL_canvas {
+            background: radial-gradient(circle, #5E297A, #200);
+            position: absolute;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+
+        #loadingText {
             position: fixed;
             font-size: 80px;
             font-family: monospace;
             color: white;
             z-index: 10;
         }
+
+        #target {
+            background: white;
+            border: 1px solid black;
+            z-index: 10;
+        }
     </style>
 </head>
-<body onload="main();">
+
+<body onload="main();" style="touch-action:none">
     <script src="transforms.js"></script>
     <script src="renderEngine.js"></script>
     <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
-    <div class=container><h1 id="loadingText">Loading...</h1></div></body>
+    <div class=container>
+        <h1 id="loadingText">Loading...</h1>
+    </div>
 </body>
+</body>
+
 </html>

@@ -45,7 +45,7 @@ function initShaders() {
 
     var xhr = new XMLHttpRequest();
     //synchronous request requires a false third parameter
-    xhr.open('GET', './Shaders/Toon/shader.vs', false);
+    xhr.open('GET', './Shaders/Phong/shader.vs', false);
     //overriding the mime type is required
     xhr.overrideMimeType('text/xml');
     xhr.send(null);
@@ -57,7 +57,7 @@ function initShaders() {
             console.error("Problem with fetting vertex shader: " + xhr.statusText);
         }
     }
-    xhr.open('GET', './Shaders/Toon/shader.fs', false);
+    xhr.open('GET', './Shaders/Phong/shader.fs', false);
     xhr.send(null);
     if (xhr.readyState == xhr.DONE) {
         if (xhr.status === 200) {
@@ -175,14 +175,15 @@ function handleJSON(json3D) {
 function main() {
     var CANVAS = document.getElementById("WebGL_canvas");
     //Reload on orientation change
-    window.addEventListener("orientationchange", function() {
+    window.addEventListener("orientationchange", function () {
         // Announce the new orientation number
-        var orientation = window.orientation; 
-        switch(orientation) { 
+        var orientation = window.orientation;
+        switch (orientation) {
             case 0:
             case 90:
-            case -90: window.location.reload(); 
-            break; } 
+            case -90: window.location.reload();
+                break;
+        }
     }, false);
     /*========================= CAPTURE EVENTS ========================= */
 
@@ -193,7 +194,7 @@ function main() {
 
     var old_x, old_y, ZOOM = -5, THETA = 7, PHI = 0.3;
 
-    var dX = 0.1, dY = 0, dZ = 0, zoom = 0;
+    var dX = 0.1, dY = 0, dZ = -5, zoom = 0;
     var mouseDownHandler = function (e) {
         drag = true;
         old_x = e.pageX, old_y = e.pageY;
@@ -214,9 +215,9 @@ function main() {
     };
 
     function mouseScrollHandler(e) {
-        zoom = Math.max(-0.2, Math.min(0.2, (e.wheelDelta || -e.detail)));
+        zoom = Math.max(-0.25, Math.min(0.25, (e.wheelDelta || -e.detail)));
         ZOOM = dZ + zoom;
-        dZ = Math.max(-18, Math.min(-3, ZOOM));
+        dZ = Math.max(-16, Math.min(-4, ZOOM));
     }
 
     CANVAS.addEventListener("mousedown", mouseDownHandler, false);
@@ -229,53 +230,112 @@ function main() {
     // Firefox
     CANVAS.addEventListener("DOMMouseScroll", mouseScrollHandler, false);
 
-    
+
     var activeTouchIdentifier;
 
     function findActiveTouch(touches) {
-        for (var ii = 0; ii < touches.length; ++ii) {
-            if (touches.item(ii).identifier == activeTouchIdentifier) {
-                return touches.item(ii);
+        for (var i = 0; i < touches.length; ++i) {
+            if (touches.item(i).identifier == activeTouchIdentifier) {
+                return touches.item(i);
             }
         }
         return null;
     }
 
-    function touchStartHandler(ev) {
-        if (mouseDown || ev.targetTouches.length == 0) {
+    function touchStartHandler(e) {
+        if (mouseDown || e.targetTouches.length == 0) {
             return;
         }
-        var touch = ev.targetTouches.item(0);
+        var touch = e.targetTouches.item(0);
         mouseDownHandler(touch);
         activeTouchIdentifier = touch.identifier;
-        ev.preventDefault();
+        e.preventDefault();
     }
 
-    function touchMoveHandler(ev) {
-        var touch = findActiveTouch(ev.changedTouches);
+    function touchMoveHandler(e) {
+        var touch = findActiveTouch(e.changedTouches);
         if (touch) {
             mouseMoveHandler(touch);
         }
-        ev.preventDefault();
+        e.preventDefault();
     }
 
-    function touchEndHandler(ev) {
-        var touch = findActiveTouch(ev.changedTouches);
+    function touchEndHandler(e) {
+        var touch = findActiveTouch(e.changedTouches);
         if (touch) {
             mouseUpHandler(touch);
         }
-        ev.preventDefault();
+        e.preventDefault();
     }
 
-    function mouseUpHandler(ev) {
+    function mouseUpHandler(e) {
         mouseDown = false;
     }
+
 
     CANVAS.addEventListener("touchstart", touchStartHandler, false);
     CANVAS.addEventListener("touchmove", touchMoveHandler, false);
     CANVAS.addEventListener("touchend", touchEndHandler, false);
     CANVAS.addEventListener("touchcancel", touchEndHandler, false);
     CANVAS.addEventListener("gestured", touchEndHandler, false);
+
+    //************************* PINCH ZOOM ******************************************    
+    //https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+
+    CANVAS.onpointerdown = pointerdown_handler;
+    CANVAS.onpointermove = pointermove_handler;
+
+    CANVAS.onpointerup = pointerup_handler;
+    CANVAS.onpointercancel = pointerup_handler;
+    CANVAS.onpointerout = pointerup_handler;
+    CANVAS.onpointerleave = pointerup_handler;
+
+    // Global vars to cache event state
+    var evCache = new Array();
+    var prevDiff = -1;
+
+    function pointerdown_handler(e) {
+        evCache.push(e);
+    }
+
+    function pointermove_handler(e) {
+
+        for (var i = 0; i < evCache.length; i++) {
+            if (e.pointerId == evCache[i].pointerId) {
+                evCache[i] = e;
+                break;
+            }
+        }
+
+        if (evCache.length == 2) {
+            var curDiff = Math.abs(evCache[0].clientX - evCache[1].clientX);
+
+            if (prevDiff > 0) {
+                    zoom = Math.max(-0.2, Math.min(0.2, (curDiff - prevDiff)));
+                    ZOOM = dZ + zoom;
+                    dZ = Math.max(-16, Math.min(-4, ZOOM));
+            }
+
+            prevDiff = curDiff;
+        }
+    }
+
+    function pointerup_handler(e) {
+        remove_event(e);
+        if (evCache.length < 2) prevDiff = -1;
+    }
+
+    function remove_event(e) {
+        for (var i = 0; i < evCache.length; i++) {
+            if (evCache[i].pointerId == e.pointerId) {
+                evCache.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    //************************* END OF PINCH ZOOM ****************************************** 
+
     /*========================= ========================= */
 
     GL = initWebGL(CANVAS);
@@ -284,7 +344,7 @@ function main() {
     initTexture();
     initJSON();
 
-    var PROJMATRIX = TRAN.get_projection(45, CANVAS.width/CANVAS.height, 1, 100);
+    var PROJMATRIX = TRAN.get_projection(45, CANVAS.width / CANVAS.height, 1, 100);
     var MOVEMATRIX = TRAN.get_I4();
     var VIEWMATRIX = TRAN.get_I4();
 
