@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebGL 3D Object Demo</title>
+    <meta name="author" content="Konrad Kisiel">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, height=device-height, minimum-scale=1.0, maximum-scale=5.0">
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 0px;
+            font-family: monospace;
+            color: white;
+            user-select: none;
+        }
+
+        #WebGL_canvas {
+            background: radial-gradient(circle, #5E297A, #200);
+            cursor: crosshair;
+            position: absolute;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+        }
+
+        #loading_text {
+            position: fixed;
+            margin-top: 44vh;
+            font-size: 8vw;
+            z-index: 10;
+        }
+
+        #FPS_counter {
+            position: fixed;
+            display: block;
+            z-index: 1000;
+            top: 2.0vh;
+            left: 2.0vh;
+            padding: 0.5vh 1.0vh;
+            background-color: rgba(96, 114, 141, 0.5);
+            font-size: 2.8vh;
+            border-radius: 2.8vh;
+            cursor: pointer;
+            transition: 0.4s;
+            opacity: 0;
+        }
+
+        .icon {
+            position: fixed;
+            /*   fill: rgb(96, 114, 141); */
+            fill: #fff;
+            height: 5.0vh;
+            width: 5.0vh;
+            cursor: pointer;
+            right: 2.0vh;
+            border-radius: 50%;
+          /*  top: 2.0vh; */
+            background-color: rgba(96, 114, 141, 0.5);
+            /* border:0.2vh solid #fff; */
+            transition: 0.4s;
+        }
+
+        .icon:hover {
+            transform: scale(1.1);
+        }
+
+        #settings {
+            z-index: 1000;
+        }
+
+        #rotation {
+            z-index: 999;
+            opacity: 0;
+        }
+
+        #FPS-b {
+            z-index: 999;
+            font-size: 3.7vh;
+            text-align: center;
+            color: #fff;
+            opacity: 0;
+        }
+
+        #FPS-span {
+            font-size: 2.8vh;
+        }
+
+        .change {
+            border: 0.2vh solid #fff;
+            transform: scale(1.1);
+        }
+        #copyright{
+            position: fixed;
+            bottom: 2.0vh;
+        }
+        /*
+        .rot{
+            -webkit-transform: rotate(-225deg);
+            transform: rotate(-225deg);
+        }
+        #CC3{
+            position: fixed;
+            text-align: center;
+            left: 2.0vh;
+            bottom: 0vh;
+            font-size: 2vh;
+            width: 100%;
+        }
+        */
+    </style>
+</head>
+
+<body onload="main();" style="touch-action:none">
+    <script>
+        var open = false;
+        function toggleNav(x) {
+            x.classList.toggle("change");
+            if (!open) {
+                document.getElementById("rotation").style = "top: 10vh; opacity: 1";
+                document.getElementById("FPS-b").style = "top: 18vh; opacity: 1";
+                open = true;
+            }
+            else {
+                document.getElementById("rotation").style = "top: 2.0vh; opacity: 0";
+                document.getElementById("FPS-b").style = "top: 2.0vh; opacity: 0";
+                open = false;
+            }
+        }
+
+        var rotate = false;
+        function rotation(y) {
+            y.classList.toggle("change");
+            /*
+            deg = rotate ? 0 : -66;
+
+            y.style.webkitTransform = 'rotate(' + deg + 'deg)';
+            y.style.mozTransform = 'rotate(' + deg + 'deg)';
+            y.style.msTransform = 'rotate(' + deg + 'deg)';
+            y.style.oTransform = 'rotate(' + deg + 'deg)';
+            y.style.transform = 'rotate(' + deg + 'deg)';
+            y.style.border = rotate ? 'none' : '0.2vh solid #fff';
+            */
+            rotate = !rotate;
+        }
+
+        var fpsOn = false;
+        function fps(z) {
+            z.classList.toggle("change");
+            if (!fpsOn) {
+                document.getElementById("FPS_counter").style.opacity = 1;
+                fpsOn = true;
+            } else {
+                document.getElementById("FPS_counter").style.opacity = 0;
+                fpsOn = false;
+            }
+        }
+    </script>
+    <script src="init.js"></script>
+    <script src="transforms.js"></script>
+    <script src="render.js"></script>
+    <canvas id="WebGL_canvas">Your browser does not support HTML5</canvas>
+    <div class=container>
+        <h1 id="loading_text">Loading...</h1>
+        <div id="FPS_counter">FPS:</div>
+        <svg id="settings" class="icon" onclick="toggleNav(this)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"
+            />
+        </svg>
+        <!--
+        <svg id="rotation" class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+            <path d="M0 0h24v24H0z" fill="none"/>
+        </svg>
+         -->
+        <svg id="rotation" class="icon" onclick="rotation(this)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+        </svg>
+
+        <b id="FPS-b" class="icon" onclick="fps(this)">
+            <span id="FPS-span">FPS</span>
+        </b>
+        <svg id="copyright" class="icon" onclick="copyright(this)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <defs>
+                <path d="M24 0v24H0V0h24z" id="a"/>
+            </defs>
+            <clipPath id="b">
+                <use overflow="visible" xlink:href="#a"/>
+            </clipPath>
+            <path clip-path="url(#b)" d="M10.08 10.86c.05-.33.16-.62.3-.87s.34-.46.59-.62c.24-.15.54-.22.91-.23.23.01.44.05.63.13.2.09.38.21.52.36s.25.33.34.53.13.42.14.64h1.79c-.02-.47-.11-.9-.28-1.29s-.4-.73-.7-1.01-.66-.5-1.08-.66-.88-.23-1.39-.23c-.65 0-1.22.11-1.7.34s-.88.53-1.2.92-.56.84-.71 1.36S8 11.29 8 11.87v.27c0 .58.08 1.12.23 1.64s.39.97.71 1.35.72.69 1.2.91 1.05.34 1.7.34c.47 0 .91-.08 1.32-.23s.77-.36 1.08-.63.56-.58.74-.94.29-.74.3-1.15h-1.79c-.01.21-.06.4-.15.58s-.21.33-.36.46-.32.23-.52.3c-.19.07-.39.09-.6.1-.36-.01-.66-.08-.89-.23-.25-.16-.45-.37-.59-.62s-.25-.55-.3-.88-.08-.67-.08-1v-.27c0-.35.03-.68.08-1.01zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+        </svg>
+    </div>
+</body>
+<!--
+
+     .rotate {
+            -webkit-animation: rotation 2s infinite linear;
+        }
+
+        @-webkit-keyframes rotation {
+            from {
+                -webkit-transform: rotate(360deg);
+            }
+            to {
+                -webkit-transform: rotate(1deg);
+            }
+        }
+        
+var rotate = false;
+function rotation(x) {
+    x.classList.toggle("rotate");
+        if (!rotate) {
+
+            rotate = true;
+        }
+        else {
+            
+            rotate = false;
+        }
+}
+-->
+</html>
