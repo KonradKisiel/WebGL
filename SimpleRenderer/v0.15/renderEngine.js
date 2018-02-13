@@ -45,7 +45,7 @@ function initShaders() {
 
     var xhr = new XMLHttpRequest();
     //synchronous request requires a false third parameter
-    xhr.open('GET', './Shaders/Phong/shader.vs', false);
+    xhr.open('GET', './Shaders/Toon/shader.vs', false);
     //overriding the mime type is required
     xhr.overrideMimeType('text/xml');
     xhr.send(null);
@@ -57,7 +57,7 @@ function initShaders() {
             console.error("Problem with fetting vertex shader: " + xhr.statusText);
         }
     }
-    xhr.open('GET', './Shaders/Phong/shader.fs', false);
+    xhr.open('GET', './Shaders/Toon/shader.fs', false);
     xhr.send(null);
     if (xhr.readyState == xhr.DONE) {
         if (xhr.status === 200) {
@@ -170,8 +170,6 @@ function handleJSON(json3D) {
     GL.enable(GL.DEPTH_TEST);  //check which faces are closest to camera, and render it
 }
 
-
-
 function main() {
     var CANVAS = document.getElementById("WebGL_canvas");
     //Reload on orientation change
@@ -226,9 +224,9 @@ function main() {
     CANVAS.addEventListener("mousemove", mouseMoveHandler, false);
     //Mouse scroll listeners
     // IE9, Chrome, Safari, Opera
-    CANVAS.addEventListener("mousewheel", mouseScrollHandler, false);
+    CANVAS.addEventListener("mousewheel", mouseScrollHandler, {passive: true});
     // Firefox
-    CANVAS.addEventListener("DOMMouseScroll", mouseScrollHandler, false);
+    CANVAS.addEventListener("DOMMouseScroll", mouseScrollHandler, {passive: true});
 
 
     var activeTouchIdentifier;
@@ -249,7 +247,6 @@ function main() {
         var touch = e.targetTouches.item(0);
         mouseDownHandler(touch);
         activeTouchIdentifier = touch.identifier;
-        e.preventDefault();
     }
 
     function touchMoveHandler(e) {
@@ -257,7 +254,6 @@ function main() {
         if (touch) {
             mouseMoveHandler(touch);
         }
-        e.preventDefault();
     }
 
     function touchEndHandler(e) {
@@ -265,7 +261,6 @@ function main() {
         if (touch) {
             mouseUpHandler(touch);
         }
-        e.preventDefault();
     }
 
     function mouseUpHandler(e) {
@@ -273,8 +268,8 @@ function main() {
     }
 
 
-    CANVAS.addEventListener("touchstart", touchStartHandler, false);
-    CANVAS.addEventListener("touchmove", touchMoveHandler, false);
+    CANVAS.addEventListener("touchstart", touchStartHandler, {passive: true});
+    CANVAS.addEventListener("touchmove", touchMoveHandler, {passive: true});
     CANVAS.addEventListener("touchend", touchEndHandler, false);
     CANVAS.addEventListener("touchcancel", touchEndHandler, false);
     CANVAS.addEventListener("gestured", touchEndHandler, false);
@@ -285,6 +280,8 @@ function main() {
     CANVAS.onpointerdown = pointerdown_handler;
     CANVAS.onpointermove = pointermove_handler;
 
+    // Use same handler for pointer{up,cancel,out,leave} events since
+    // the semantics for these events - in this app - are the same.
     CANVAS.onpointerup = pointerup_handler;
     CANVAS.onpointercancel = pointerup_handler;
     CANVAS.onpointerout = pointerup_handler;
@@ -307,25 +304,31 @@ function main() {
             }
         }
 
+        // If two pointers are down, check for pinch gestures
         if (evCache.length == 2) {
+            // Calculate the distance between the two pointers
             var curDiff = Math.abs(evCache[0].clientX - evCache[1].clientX);
 
             if (prevDiff > 0) {
+                    //zoom = 0.04*(curDiff-prevDiff);
                     zoom = Math.max(-0.2, Math.min(0.2, (curDiff - prevDiff)));
                     ZOOM = dZ + zoom;
                     dZ = Math.max(-16, Math.min(-4, ZOOM));
             }
 
+            // Cache the distance for the next move event 
             prevDiff = curDiff;
         }
     }
 
     function pointerup_handler(e) {
         remove_event(e);
+        // If the number of pointers down is less than two then reset diff tracker
         if (evCache.length < 2) prevDiff = -1;
     }
 
     function remove_event(e) {
+        // Remove this event from the target's cache
         for (var i = 0; i < evCache.length; i++) {
             if (evCache[i].pointerId == e.pointerId) {
                 evCache.splice(i, 1);
