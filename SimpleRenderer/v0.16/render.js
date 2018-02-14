@@ -19,9 +19,9 @@ function main() {
     var drag = false;
     var scroll = false;
 
-    var old_x, old_y, ZOOM = -6, THETA = 7, PHI = 0.3;
+    var old_x, old_y, ZOOM = -8, THETA = 10, PHI = 0.5;
 
-    var dX = 0.1, dY = 0, dZ = ZOOM, zoom = 0;
+    var dX = 0.1, dY = 0, dZ = -8, zoom = 0;
     var mouseDownHandler = function (e) {
         drag = true;
         old_x = e.pageX, old_y = e.pageY;

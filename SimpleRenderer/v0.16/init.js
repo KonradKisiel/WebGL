@@ -43,7 +43,8 @@ function initShaders() {
 
     var xhr = new XMLHttpRequest();
     //synchronous request requires a false third parameter
-    xhr.open('GET', './Shaders/Toon/shader.vs', false);
+   // xhr.open('GET', './Shaders/Toon/shader.vs', false);
+   xhr.open('GET', './Shaders/Phong/shader.vs', false);
     //overriding the mime type is required
     xhr.overrideMimeType('text/xml');
     xhr.send(null);
@@ -55,7 +56,8 @@ function initShaders() {
             console.error("Problem with fetting vertex shader: " + xhr.statusText);
         }
     }
-    xhr.open('GET', './Shaders/Toon/shader.fs', false);
+    //xhr.open('GET', './Shaders/Toon/shader.fs', false);
+    xhr.open('GET', './Shaders/Phong/shader.fs', false);
     xhr.send(null);
     if (xhr.readyState == xhr.DONE) {
         if (xhr.status === 200) {
@@ -101,7 +103,8 @@ function initShader(GL, type, source) {
 function initTexture() {
     texture = GL.createTexture();
     texture.image = new Image();
-    texture.image.src = "Textures/TextureMig105.png";
+    //texture.image.src = "Textures/skull - Kopia.png";
+    texture.image.src = "Textures/skull.png";
     texture.image.onload = function () {
         GL.pixelStorei(GL.UNPACK_FLIP_Y_WEBGL, true);
         GL.bindTexture(GL.TEXTURE_2D, texture);
@@ -115,7 +118,7 @@ function initTexture() {
 
 function initJSON() {
     var request3 = new XMLHttpRequest();
-    request3.open("GET", "3D/ModelMig105.json");
+    request3.open("GET", "3D/skull.json");
     request3.onreadystatechange = function () {
         if (request3.readyState == 4) {
             handleJSON(JSON.parse(request3.responseText));

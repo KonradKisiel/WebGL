@@ -6,10 +6,10 @@ varying vec3 v_fragNormal;
 uniform sampler2D u_s2D_texture;
 void main()
 {  
-    vec3 ambientLightIntensity = vec3(0.25, 0.2, 0.4);
-    vec3 sunLightIntensity = vec3(0.7, 0.6, 0.3);
+    vec3 ambientLightIntensity = vec3(0.05, 0.05, 0.05);
+    vec3 sunLightIntensity = vec3(0.7, 0.65, 0.6);
     //directional light
-    vec3 sunLightDirection = normalize(vec3(1.0, -4.0, -10.0));
+    vec3 sunLightDirection = normalize(vec3(5.0, 12.0, -1.0));
     vec3 sufaceNormal = normalize(v_fragNormal);
 
     vec4 texel = texture2D(u_s2D_texture, v_fragTextCord);
